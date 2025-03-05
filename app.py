@@ -1422,7 +1422,7 @@ def main():
     # --------------------
     # Missing Data Summary
     # --------------------
-    st.subheader("Missing Hours per Day per Station)")
+    st.subheader("Missing Hours per Day per Station")
     if len(final_stations) == 0:
         st.info("No stations are present after filtering, so missing data is not applicable.")
         return
@@ -1446,7 +1446,7 @@ def main():
     else:
         df_missing_compact = get_compact_missing_data(df_missing)
 
-    st.subheader("Number of Missing Hours per Station)")
+    st.subheader("Number of Missing Hours per Station")
     if df_missing_compact.empty:
         st.success("No missing values detected in the filtered dataset.")
     else:
