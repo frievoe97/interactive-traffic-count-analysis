@@ -307,8 +307,7 @@ def prepare_data_for_bar_plots(df: pd.DataFrame,
 
 
 def plot_bar_chart_hour(df_hour: pd.DataFrame,
-                        selected_cols: list,
-                        title: str) -> px.bar:
+                        selected_cols: list) -> px.bar:
     """
     Create a bar chart of average values by hour.
 
@@ -318,8 +317,6 @@ def plot_bar_chart_hour(df_hour: pd.DataFrame,
         DataFrame containing the mean values grouped by hour.
     selected_cols : list
         List of columns to visualize.
-    title : str
-        Chart title.
 
     Returns
     -------
@@ -341,15 +338,13 @@ def plot_bar_chart_hour(df_hour: pd.DataFrame,
         y="Value",
         color="Column",
         barmode="group",
-        title=title
     )
     fig.update_layout(xaxis_title="Hour", yaxis_title="Average")
     return fig
 
 
 def plot_bar_chart_weekday(df_weekday: pd.DataFrame,
-                           selected_cols: list,
-                           title: str) -> px.bar:
+                           selected_cols: list) -> px.bar:
     """
     Create a bar chart of average values by weekday.
 
@@ -359,8 +354,6 @@ def plot_bar_chart_weekday(df_weekday: pd.DataFrame,
         DataFrame containing the mean values grouped by weekday.
     selected_cols : list
         List of columns to visualize.
-    title : str
-        Chart title.
 
     Returns
     -------
@@ -383,7 +376,6 @@ def plot_bar_chart_weekday(df_weekday: pd.DataFrame,
         y="Value",
         color="Column",
         barmode="group",
-        title=title
     )
     fig.update_layout(xaxis_title="Weekday", yaxis_title="Average")
     return fig
@@ -443,7 +435,6 @@ def determine_label_mode(stations_included: list, stations_in_df: list) -> str:
 def plot_line_chart_hour(df_line: pd.DataFrame,
                          selected_cols: list,
                          station_label_map: dict,
-                         title: str,
                          stations_included: list) -> px.line:
     """
     Create a line chart for absolute values by hour (0..23).
@@ -508,7 +499,6 @@ def plot_line_chart_hour(df_line: pd.DataFrame,
         x="stunde",
         y="Value",
         color="Station_Column",
-        title=title
     )
     fig.update_layout(xaxis_title="Hour", yaxis_title="Absolute Value")
     return fig
@@ -517,7 +507,6 @@ def plot_line_chart_hour(df_line: pd.DataFrame,
 def plot_line_chart_weekday(df_line: pd.DataFrame,
                             selected_cols: list,
                             station_label_map: dict,
-                            title: str,
                             stations_included: list) -> px.line:
     """
     Create a line chart for absolute values by weekday.
@@ -530,8 +519,6 @@ def plot_line_chart_weekday(df_line: pd.DataFrame,
         Columns to sum for plotting.
     station_label_map : dict
         Mapping of station ID to a more descriptive label.
-    title : str
-        Chart title.
     stations_included : list
         Stations explicitly included by the user.
 
@@ -585,7 +572,6 @@ def plot_line_chart_weekday(df_line: pd.DataFrame,
         x="Weekday",
         y="Value",
         color="Station_Column",
-        title=title
     )
     fig.update_layout(xaxis_title="Weekday", yaxis_title="Absolute Value")
     return fig
@@ -598,7 +584,6 @@ def plot_line_chart_weekday(df_line: pd.DataFrame,
 def plot_bar_chart_date(df_line: pd.DataFrame,
                         selected_cols: list,
                         station_label_map: dict,
-                        title: str,
                         stations_included: list) -> px.bar:
     """
     Bar chart showing absolute values by day (tag_dt).
@@ -611,8 +596,6 @@ def plot_bar_chart_date(df_line: pd.DataFrame,
         The numeric columns to plot (summed).
     station_label_map : dict
         Mapping of station ID to a more descriptive label.
-    title : str
-        Chart title.
     stations_included : list
         Stations explicitly included by the user.
 
@@ -664,7 +647,6 @@ def plot_bar_chart_date(df_line: pd.DataFrame,
         y="Value",
         color="Station_Column",
         barmode="group",
-        title=title
     )
     fig.update_layout(xaxis_title="Date", yaxis_title="Absolute Value")
     return fig
@@ -673,7 +655,6 @@ def plot_bar_chart_date(df_line: pd.DataFrame,
 def plot_boxplot_chart_date(df_line: pd.DataFrame,
                             selected_cols: list,
                             station_label_map: dict,
-                            title: str,
                             stations_included: list) -> px.box:
     """
     Create a boxplot of daily summed values for each station/column combination.
@@ -686,8 +667,6 @@ def plot_boxplot_chart_date(df_line: pd.DataFrame,
         The numeric columns to plot (summed).
     station_label_map : dict
         Mapping of station ID to a more descriptive label.
-    title : str
-        Chart title.
     stations_included : list
         Stations explicitly included by the user.
 
@@ -740,7 +719,6 @@ def plot_boxplot_chart_date(df_line: pd.DataFrame,
         x="Station_Column",
         y="Value",
         color="Station_Column",
-        title=title
     )
     fig.update_layout(
         yaxis_title="Absolute Value",
@@ -753,7 +731,6 @@ def plot_boxplot_chart_date(df_line: pd.DataFrame,
 def plot_peak_bar_chart_date(df_line: pd.DataFrame,
                              selected_cols: list,
                              station_label_map: dict,
-                             title: str,
                              stations_included: list) -> px.bar:
     """
     Bar chart showing the peak (max) values by day (tag_dt).
@@ -766,8 +743,6 @@ def plot_peak_bar_chart_date(df_line: pd.DataFrame,
         The numeric columns to take the maximum for each day.
     station_label_map : dict
         Mapping of station ID to a more descriptive label.
-    title : str
-        Chart title.
     stations_included : list
         Stations explicitly included by the user.
 
@@ -819,7 +794,6 @@ def plot_peak_bar_chart_date(df_line: pd.DataFrame,
         y="Value",
         color="Station_Column",
         barmode="group",
-        title=title
     )
     fig.update_layout(xaxis_title="Date", yaxis_title="Absolute Value")
     return fig
@@ -828,7 +802,6 @@ def plot_peak_bar_chart_date(df_line: pd.DataFrame,
 def plot_line_chart_date(df_line: pd.DataFrame,
                          selected_cols: list,
                          station_label_map: dict,
-                         title: str,
                          stations_included: list) -> px.line:
     """
     Line chart showing absolute values by day (tag_dt).
@@ -841,8 +814,6 @@ def plot_line_chart_date(df_line: pd.DataFrame,
         The numeric columns to plot (summed).
     station_label_map : dict
         Mapping of station ID to a descriptive label.
-    title : str
-        Chart title.
     stations_included : list
         Stations explicitly included by the user.
 
@@ -893,7 +864,6 @@ def plot_line_chart_date(df_line: pd.DataFrame,
         x="tag_dt",
         y="Value",
         color="Station_Column",
-        title=title
     )
     fig.update_layout(xaxis_title="Date", yaxis_title="Absolute Value")
     return fig
@@ -902,7 +872,6 @@ def plot_line_chart_date(df_line: pd.DataFrame,
 def plot_peak_volume_line_chart_date(df_line: pd.DataFrame,
                                      selected_cols: list,
                                      station_label_map: dict,
-                                     title: str,
                                      stations_included: list) -> px.line:
     """
     Line chart showing peak (max) values by day (tag_dt).
@@ -915,8 +884,6 @@ def plot_peak_volume_line_chart_date(df_line: pd.DataFrame,
         The numeric columns to take maximum for each day.
     station_label_map : dict
         Mapping of station ID to a descriptive label.
-    title : str
-        Chart title.
     stations_included : list
         Stations explicitly included by the user.
 
@@ -967,7 +934,6 @@ def plot_peak_volume_line_chart_date(df_line: pd.DataFrame,
         x="tag_dt",
         y="Value",
         color="Station_Column",
-        title=title
     )
     fig.update_layout(xaxis_title="Date", yaxis_title="Absolute Value")
     return fig
@@ -980,7 +946,6 @@ def plot_peak_volume_line_chart_date(df_line: pd.DataFrame,
 def plot_boxplot_peak_volume(df_line: pd.DataFrame,
                              selected_cols: list,
                              station_label_map: dict,
-                             title: str,
                              stations_included: list) -> px.box:
     """
     Create a boxplot of daily peak (max) values for each station/column combination.
@@ -993,8 +958,6 @@ def plot_boxplot_peak_volume(df_line: pd.DataFrame,
         The numeric columns to plot (max values).
     station_label_map : dict
         Mapping of station ID to a more descriptive label.
-    title : str
-        Chart title.
     stations_included : list
         Stations explicitly included by the user.
 
@@ -1045,7 +1008,6 @@ def plot_boxplot_peak_volume(df_line: pd.DataFrame,
         x="Station_Column",
         y="Value",
         color="Station_Column",
-        title=title
     )
     fig.update_layout(yaxis_title="Peak Value")
     fig.update_xaxes(showticklabels=False)
@@ -1056,8 +1018,7 @@ def plot_scatter_speed_vs_volume(df: pd.DataFrame,
                                  q_column: str,
                                  v_column: str,
                                  station_label_map: dict,
-                                 stations_included: list,
-                                 title: str) -> px.scatter:
+                                 stations_included: list) -> px.scatter:
     """
     Create a scatter plot with speed on the x-axis and volume on the y-axis.
 
@@ -1076,8 +1037,6 @@ def plot_scatter_speed_vs_volume(df: pd.DataFrame,
         Mapping of station ID to a more descriptive label.
     stations_included : list
         List of stations explicitly included by the user.
-    title : str
-        Chart title.
 
     Returns
     -------
@@ -1095,7 +1054,6 @@ def plot_scatter_speed_vs_volume(df: pd.DataFrame,
             x=v_column,
             y=q_column,
             hover_data=['stunde'],
-            title=title,
             labels={v_column: "Speed", q_column: "Volume"}
         )
     else:
@@ -1108,7 +1066,6 @@ def plot_scatter_speed_vs_volume(df: pd.DataFrame,
             y=q_column,
             color='Station_Label',
             hover_data=['stunde'],
-            title=title,
             labels={v_column: "Speed", q_column: "Volume"}
         )
     fig.update_layout(xaxis_title="Speed", yaxis_title="Volume")
@@ -1135,7 +1092,7 @@ def main():
     3. Displays various charts (bar, line, box, scatter) for hourly, weekday, and daily analyses.
     4. Shows missing-data summaries.
     """
-    st.title("Interactive Traffic Count Analysis (VIZ Messquerschnitt)")
+    st.title("Interactive Traffic Count Analysis")
 
     # --------------------
     # Data Year Selection
@@ -1348,40 +1305,40 @@ def main():
     else:
         station_names_str = f"{len(final_stations)} stations selected"
 
+    st.write(f"**Selected Stations:** {station_names_str}")
+
     # --------------------
     # Bar Charts (Average)
     # --------------------
-    st.subheader("Average per Hour (Bar Chart)")
+    st.subheader("Average Volume per Hour")
     fig_hour_bar = plot_bar_chart_hour(
-        df_hour_bar, cols_selected, f"Average per Hour – {station_names_str}"
+        df_hour_bar, cols_selected
     )
     st.plotly_chart(fig_hour_bar, use_container_width=True)
 
-    st.subheader("Average per Weekday (Bar Chart)")
+    st.subheader("Average Volume per Weekday")
     fig_wday_bar = plot_bar_chart_weekday(
-        df_wday_bar, cols_selected, f"Average per Weekday – {station_names_str}"
+        df_wday_bar, cols_selected
     )
     st.plotly_chart(fig_wday_bar, use_container_width=True)
 
     # --------------------
     # Line Charts (Absolute)
     # --------------------
-    st.subheader("Absolute Values per Hour (Line Chart)")
+    st.subheader("Absolute Volumes per Hour")
     fig_hour_line = plot_line_chart_hour(
         df_line,
         cols_selected,
         station_label_map,
-        f"Absolute per Hour – {station_names_str}",
         stations_included
     )
     st.plotly_chart(fig_hour_line, use_container_width=True)
 
-    st.subheader("Absolute Values per Weekday (Line Chart)")
+    st.subheader("Absolute Volumes per Weekday")
     fig_wday_line = plot_line_chart_weekday(
         df_line,
         cols_selected,
         station_label_map,
-        f"Absolute per Weekday – {station_names_str}",
         stations_included
     )
     st.plotly_chart(fig_wday_line, use_container_width=True)
@@ -1389,22 +1346,20 @@ def main():
     # --------------------
     # Daily Charts
     # --------------------
-    st.subheader("Absolute Values per Day (Bar Chart)")
+    st.subheader("Absolute Volumes per Day")
     fig_day_bar = plot_bar_chart_date(
         df_line,
         cols_selected,
         station_label_map,
-        f"Absolute per Day – {station_names_str}",
         stations_included
     )
     st.plotly_chart(fig_day_bar, use_container_width=True)
 
-    st.subheader("Absolute Values per Day (Line Chart)")
+    st.subheader("Absolute Volumes per Day")
     fig_day_line = plot_line_chart_date(
         df_line,
         cols_selected,
         station_label_map,
-        f"Absolute per Day – {station_names_str}",
         stations_included
     )
     st.plotly_chart(fig_day_line, use_container_width=True)
@@ -1412,22 +1367,20 @@ def main():
     # --------------------
     # Boxplots
     # --------------------
-    st.subheader("Boxplot of Daily Sums")
+    st.subheader("Daily Sums")
     fig_box = plot_boxplot_chart_date(
         df_line,
         cols_selected,
         station_label_map,
-        f"Boxplot – {station_names_str}",
         stations_included
     )
     st.plotly_chart(fig_box, use_container_width=True, key="boxplot")
 
-    st.subheader("Boxplot of Daily Peak Volume")
+    st.subheader("Daily Peak Volume")
     fig_box_peak = plot_boxplot_peak_volume(
         df_line,
         cols_selected,
         station_label_map,
-        f"Boxplot (Peak Volume) – {station_names_str}",
         stations_included
     )
     st.plotly_chart(fig_box_peak, use_container_width=True, key="boxplot_peak")
@@ -1435,22 +1388,20 @@ def main():
     # --------------------
     # Peak Volume Charts
     # --------------------
-    st.subheader("Peak Volume per Day (Bar Chart)")
+    st.subheader("Peak Volume per Day")
     fig_peak_bar = plot_peak_bar_chart_date(
         df_line,
         cols_selected,
         station_label_map,
-        f"Peak Volume per Day – {station_names_str}",
         stations_included
     )
     st.plotly_chart(fig_peak_bar, use_container_width=True, key="peak_bar")
 
-    st.subheader("Peak Volume per Day (Line Chart)")
+    st.subheader("Peak Volume per Day")
     fig_peak_line = plot_peak_volume_line_chart_date(
         df_line,
         cols_selected,
         station_label_map,
-        f"Peak Volume per Day – {station_names_str}",
         stations_included
     )
     st.plotly_chart(fig_peak_line, use_container_width=True, key="peak_line")
@@ -1458,21 +1409,20 @@ def main():
     # --------------------
     # Scatter Plot: Speed vs Volume
     # --------------------
-    st.subheader("Scatter Plot: Speed vs Volume")
+    st.subheader("Speed-Volume Fundamental Diagram")
     fig_scatter = plot_scatter_speed_vs_volume(
         df_data,
         q_scatter,
         v_scatter,
         station_label_map,
-        stations_included,
-        f"Scatter Plot (Speed vs Volume) – {station_names_str}"
+        stations_included
     )
     st.plotly_chart(fig_scatter, use_container_width=True)
 
     # --------------------
     # Missing Data Summary
     # --------------------
-    st.subheader("Missing Data (Hours/Days per Station)")
+    st.subheader("Missing Hours per Day per Station)")
     if len(final_stations) == 0:
         st.info("No stations are present after filtering, so missing data is not applicable.")
         return
@@ -1485,7 +1435,6 @@ def main():
     if df_missing.empty:
         st.success("No missing values detected after the applied filters.")
     else:
-        st.write("Missing hours per station/day in the filtered dataset:")
         df_missing_display = df_missing.copy()
         df_missing_display["Station_Name"] = df_missing_display["mq_name"].apply(
             lambda x: station_label_map.get(x, x)
@@ -1497,10 +1446,10 @@ def main():
     else:
         df_missing_compact = get_compact_missing_data(df_missing)
 
+    st.subheader("Number of Missing Hours per Station)")
     if df_missing_compact.empty:
         st.success("No missing values detected in the filtered dataset.")
     else:
-        st.write("Summary of missing hours per station (filtered dataset):")
         df_missing_compact["Station_Name"] = df_missing_compact["mq_name"].apply(
             lambda x: station_label_map.get(x, x)
         )
@@ -1509,7 +1458,7 @@ def main():
     # --------------------
     # Days per Station (after all filters)
     # --------------------
-    st.subheader("Days per Station (after filters)")
+    st.subheader("Days per Station")
     df_days_per_station = (
         df_data.groupby("mq_name")["tag_dt"].nunique().reset_index(name="days_count")
     )
