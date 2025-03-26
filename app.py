@@ -2,9 +2,11 @@ import os
 import glob
 import logging
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+import plotly.graph_objects as go
 
 #########################################
 # Logging Configuration
@@ -112,6 +114,20 @@ def load_stammdaten(year_dir: str) -> pd.DataFrame:
     logger.warning(f"No stammdaten CSV found in '{year_dir}'.")
     return pd.DataFrame()
 
+def load_simulation_data(data_dir: str) -> pd.DataFrame:
+    """
+    Lädt die Simulationsdaten aus der Datei 'count_speed_volume.csv'
+    und rechnet die Zeitspalte (time_step in Sekunden) in Stunden um.
+    """
+    sim_file = os.path.join(data_dir, "count_speed_volume.csv")
+    try:
+        df_sim = pd.read_csv(sim_file)
+        # Umrechnung: Zeit in Sekunden -> Stunden (als float)
+        df_sim["hour"] = df_sim["time_step"] / 3600
+        return df_sim
+    except Exception as e:
+        logger.error(f"Fehler beim Laden der Simulationsdaten: {e}")
+        return pd.DataFrame()
 
 @st.cache_data
 def get_missing_data_info_cached(df: pd.DataFrame, min_hours_per_day: int) -> pd.DataFrame:
@@ -304,6 +320,35 @@ def prepare_data_for_bar_plots(df: pd.DataFrame,
     )
 
     return df_hour_mean, df_weekday_mean
+
+
+def plot_speed_volume_comparison(df_meas: pd.DataFrame,
+                                 df_sim: pd.DataFrame,
+                                 station_id: str,
+                                 q_column: str,
+                                 v_column: str,
+                                 station_label_map: dict) -> px.scatter:
+    """
+    Creates a Speed-Volume diagram with two datasets (measurement and simulation data)
+    """
+    df_meas_station = df_meas[df_meas["mq_name"] == station_id].copy()
+    df_sim_station = df_sim[df_sim["station_id"] == station_id].copy()
+
+    df_meas_station = df_meas_station.rename(columns={v_column: "Speed", q_column: "Volume"})
+    df_meas_station["Source"] = "Messdaten"
+
+    df_sim_station = df_sim_station.rename(columns={"avg_speed": "Speed", "hourly_volume": "Volume"})
+    df_sim_station["Source"] = "Simulation"
+
+    df_combined = pd.concat([df_meas_station[["Speed", "Volume", "Source"]],
+                             df_sim_station[["Speed", "Volume", "Source"]]])
+
+    # plot
+    fig = px.scatter(df_combined, x="Speed", y="Volume", color="Source",
+                     labels={"Speed": "Geschwindigkeit (km/h)", "Volume": "Volumen (Fzg./h)"})
+
+    fig.update_layout(legend_title="Datenquelle")
+    return fig
 
 
 def plot_bar_chart_hour(df_hour: pd.DataFrame,
@@ -943,6 +988,31 @@ def plot_peak_volume_line_chart_date(df_line: pd.DataFrame,
 # New: Additional Plot Functions
 #########################################
 
+def compute_custom_quartiles(group: pd.Series, q1, q3):
+    return {
+        'lowerfence': np.min(group),
+        'q1': np.percentile(group, q1),
+        'median': np.median(group),
+        'q3': np.percentile(group, q3),
+        'upperfence': np.max(group)
+    }
+
+def plot_custom_boxplot(long_df, q1, q3):
+    fig = go.Figure()
+    for name, group in long_df.groupby("Station_Column"):
+        stats = compute_custom_quartiles(group['Value'], q1=q1, q3=q3)
+        fig.add_trace(go.Box(
+            name=name,
+            q1=[stats['q1']],
+            median=[stats['median']],
+            q3=[stats['q3']],
+            lowerfence=[stats['lowerfence']],
+            upperfence=[stats['upperfence']],
+            boxpoints=False,
+        ))
+    fig.update_layout(yaxis_title="Peak Value")
+    return fig
+
 def plot_boxplot_peak_volume(df_line: pd.DataFrame,
                              selected_cols: list,
                              station_label_map: dict,
@@ -1003,15 +1073,18 @@ def plot_boxplot_peak_volume(df_line: pd.DataFrame,
 
     long_df["Station_Column"] = long_df.apply(make_label, axis=1)
 
-    fig = px.box(
-        long_df,
-        x="Station_Column",
-        y="Value",
-        color="Station_Column",
-    )
-    fig.update_layout(yaxis_title="Peak Value")
-    fig.update_xaxes(showticklabels=False)
+    fig = plot_custom_boxplot(long_df, q1=10, q3=90)
     return fig
+
+    # fig = px.box(
+    #     long_df,
+    #     x="Station_Column",
+    #     y="Value",
+    #     color="Station_Column",
+    # )
+    # fig.update_layout(yaxis_title="Peak Value")
+    # fig.update_xaxes(showticklabels=False)
+    # return fig
 
 
 def plot_scatter_speed_vs_volume(df: pd.DataFrame,
@@ -1071,6 +1144,67 @@ def plot_scatter_speed_vs_volume(df: pd.DataFrame,
     fig.update_layout(xaxis_title="Speed", yaxis_title="Volume")
     return fig
 
+def plot_scatter_speed_vs_density(df: pd.DataFrame,
+                                  q_column: str,
+                                  v_column: str,
+                                  station_label_map: dict,
+                                  stations_included: list) -> px.scatter:
+    """
+    Create a scatter plot that displays speed versus density (q / v).
+    Density is calculated as the volume divided by the speed.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Filtered DataFrame containing the relevant data.
+    q_column : str
+        Column name for volume (e.g., 'q_kfz_mq_hr').
+    v_column : str
+        Column name for speed (e.g., 'v_kfz_mq_hr').
+    station_label_map : dict
+        Mapping of station IDs to descriptive labels.
+    stations_included : list
+        List of stations selected by the user.
+
+    Returns
+    -------
+    px.scatter
+        A Plotly Express scatter plot.
+    """
+    if df.empty:
+        return px.scatter(title="No data available.")
+
+    # Create a copy and filter out records with v <= 0 to avoid division by zero
+    df = df.copy()
+    df = df[df[v_column] > 0]
+
+    # Calculate density
+    df['density'] = df[q_column] / df[v_column]
+
+    if len(stations_included) == 0:
+        # Aggregate data: Group by hour to calculate average values for speed and density
+        df_agg = df.groupby('stunde')[[v_column, 'density']].mean().reset_index()
+        fig = px.scatter(
+            df_agg,
+            x=v_column,
+            y='density',
+            hover_data=['stunde'],
+            labels={v_column: "Speed (km/h)", 'density': "Density (veh/km)"}
+        )
+    else:
+        # Filter data for selected stations
+        df_filtered = df[df['mq_name'].isin(stations_included)].copy()
+        df_filtered['Station_Label'] = df_filtered['mq_name'].apply(lambda x: station_label_map.get(x, x))
+        fig = px.scatter(
+            df_filtered,
+            x=v_column,
+            y='density',
+            color='Station_Label',
+            hover_data=['stunde'],
+            labels={v_column: "Speed (km/h)", 'density': "Density (veh/km)"}
+        )
+    fig.update_layout(xaxis_title="Speed (km/h)", yaxis_title="Density (veh/km)")
+    return fig
 
 #########################################
 # Streamlit App Main Function
@@ -1135,7 +1269,8 @@ def main():
             station_label_map[mq] = f"{street} ({mq})"
 
     # For stations not in Stammdaten
-    all_mq_in_data = df_data["mq_name"].unique().tolist()
+    # all_mq_in_data = df_data["mq_name"].unique().tolist()
+    all_mq_in_data = df_data["mq_name"].dropna().astype(str).unique().tolist()
     for mq in all_mq_in_data:
         if mq not in station_label_map:
             station_label_map[mq] = f"{mq} (No Stammdaten)"
@@ -1246,6 +1381,24 @@ def main():
                         st.sidebar.warning(f"Invalid range: {rng} (start > end)")
                 except ValueError:
                     st.sidebar.warning(f"Cannot parse date range: {rng}")
+
+    # --------------------
+    # Load Simulation Data
+    # --------------------
+    df_sim = load_simulation_data(data_dir)
+    if df_sim.empty:
+        st.warning("No simulation data found!")
+    else:
+        sim_station_options = sorted(df_sim["station_id"].unique())
+        sim_station_label_map = {
+            row["station_id"]: f'{row["station_id"]} ({row["station_name"]})'
+            for _, row in df_sim.drop_duplicates("station_id").iterrows()
+        }
+        selected_sim_station = st.sidebar.selectbox(
+            "Select Simulation Station",
+            sim_station_options,
+            format_func=lambda x: sim_station_label_map.get(x, x)
+        )
 
     # --------------------
     # Filter Data
@@ -1420,6 +1573,34 @@ def main():
     st.plotly_chart(fig_scatter, use_container_width=True)
 
     # --------------------
+    # Scatter Plot: Speed vs. Density
+    # --------------------
+    # st.subheader("Speed-Density Fundamental Diagram")
+    # fig_scatter_density = plot_scatter_speed_vs_density(
+    #     df_data,
+    #     q_scatter,
+    #     v_scatter,
+    #     station_label_map,
+    #     stations_included
+    # )
+    # st.plotly_chart(fig_scatter_density, use_container_width=True)
+
+    # --------------------
+    # Vergleichsdiagramm: Simulationsdaten vs. Messdaten
+    # --------------------
+    if selected_sim_station:
+        st.subheader("Speed-Volume Compariso Fundamental strDiagram")
+        fig_comparison = plot_speed_volume_comparison(
+            df_data,  # Die bereits gefilterten Messdaten
+            df_sim,  # Die geladenen Simulationsdaten
+            selected_sim_station,
+            q_scatter,  # Die im bestehenden Scatter-Dropdown gewählten Spalte für Volumen
+            v_scatter,  # Die im bestehenden Scatter-Dropdown gewählte Spalte für Geschwindigkeit
+            station_label_map
+        )
+        st.plotly_chart(fig_comparison, use_container_width=True)
+
+    # --------------------
     # Missing Data Summary
     # --------------------
     st.subheader("Missing Hours per Day per Station")
@@ -1439,7 +1620,7 @@ def main():
         df_missing_display["Station_Name"] = df_missing_display["mq_name"].apply(
             lambda x: station_label_map.get(x, x)
         )
-        st.dataframe(df_missing_display[["Station_Name", "date", "missing_hours"]], use_container_width=True)
+        st.dataframe(df_missing_display[["Station_Name", "date", "missing_hours"]], use_container_width=True, hide_index=True)
 
     if len(stations_included) == 0 and len(stations_excluded) == 0:
         df_missing_compact = get_compact_missing_data_cached(df_missing)
@@ -1450,10 +1631,10 @@ def main():
     if df_missing_compact.empty:
         st.success("No missing values detected in the filtered dataset.")
     else:
-        df_missing_compact["Station_Name"] = df_missing_compact["mq_name"].apply(
-            lambda x: station_label_map.get(x, x)
-        )
-        st.dataframe(df_missing_compact[["Station_Name", "total_missing_hours"]], use_container_width=True)
+        df_missing_compact["Station_Name"] = df_missing_compact["mq_name"].apply(lambda x: station_label_map.get(x, x))
+        df_missing_compact.insert(0, "MQ_KURZNAME", df_missing_compact["mq_name"])
+        st.dataframe(df_missing_compact[["MQ_KURZNAME", "Station_Name", "total_missing_hours"]],
+                     use_container_width=True, hide_index=True)
 
     # --------------------
     # Days per Station (after all filters)
@@ -1465,7 +1646,7 @@ def main():
     df_days_per_station["Station_Name"] = df_days_per_station["mq_name"].apply(
         lambda x: station_label_map.get(x, x)
     )
-    st.dataframe(df_days_per_station[["Station_Name", "days_count"]], use_container_width=True)
+    st.dataframe(df_days_per_station[["Station_Name", "days_count"]], use_container_width=True, hide_index=True)
 
 
 if __name__ == "__main__":
